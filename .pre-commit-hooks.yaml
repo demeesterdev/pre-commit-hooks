@@ -1,0 +1,12 @@
+- id: check-yaml
+  name: check yaml
+  description: checks yaml files for parseable syntax.
+  entry: check-yaml
+  language: python
+  types: [yaml]
+- id: check-kubernetes-secret
+  name: check kubernetes secrets
+  description: checks yaml files for kubernetes secrets
+  entry: check-yaml
+  language: python
+  types: [yaml]
