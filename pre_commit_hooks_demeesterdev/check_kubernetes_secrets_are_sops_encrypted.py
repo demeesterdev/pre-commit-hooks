@@ -36,12 +36,19 @@ def check_doc(doc: Any) -> tuple[bool, str]:
     if doc['kind'] != 'Secret':
         return True, 'not a k8s secret'
 
-    # from here on out we are dealing with a secret
+    # from here on out we assume we are dealing with a k8s secret
+    try:
+        secret_name = doc['metadata']['name']
+    except Exception:
+        secret_name = '<unnamed>'
+
+    doc_descriptor = f'secret/{secret_name}'
+
     if 'sops' not in doc:
         # sops puts a `sops` key in the encrypted output. If it is not
         # present, very likely the file is not encrypted.
         return False, (
-            'sops metadata key not found in file'
+            f'manifest {doc_descriptor} is not properly encypted: '
             'is not properly encrypted'
         )
 
@@ -66,8 +73,8 @@ def check_doc(doc: Any) -> tuple[bool, str]:
 
     if invalid_keys:
         return False, (
-            'Unencrypted values found nested under'
-            f"(string)data keys: {','.join(invalid_keys)}"
+            f'manifest {doc_descriptor} is not properly encypted: '
+            f"(string)data keys unencrypted: {','.join(invalid_keys)}"
         )
 
     return True, 'Valid encryption'
@@ -91,7 +98,7 @@ def check_file(filename: str) -> tuple[bool, str]:
             failed_messages.append(message)
 
     if failed_messages:
-        return False, f"{filename} does not pass" + ','.join(failed_messages)
+        return False, f"{filename}: " + ';'.join(failed_messages)
 
     return True, f"{filename}: no secrets"
 
