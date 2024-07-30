@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from pre_commit_hooks_demeesterdev.check_kubernetes_secrets_encrypted import main  # noqa: E501
+from pre_commit_hooks_demeesterdev.check_kubernetes_secrets_are_sops_encrypted import main  # noqa: E501
 from testing.util import get_resource_path
 
 
