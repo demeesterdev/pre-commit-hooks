@@ -4,9 +4,15 @@
   entry: check-yaml
   language: python
   types: [yaml]
-- id: check-kubernetes-secret
-  name: check kubernetes secrets
-  description: checks yaml files for kubernetes secrets
-  entry: check-yaml
+- id: detect-kubernetes-secrets
+  name: detect kubernetes secrets
+  description: Detects kubernetes secret manifests in yaml files.
+  entry: detect-kubernetes-secrets
+  language: python
+  types: [yaml]
+- id: check-kubernetes-secrets-are-sops-encrypted
+  name: check if all kubernetes secrets are encrypted
+  description: checks yaml files for kubernetes secrets that are not encrypted
+  entry: check-kubernetes-secrets-are-sops-encrypted
   language: python
   types: [yaml]
