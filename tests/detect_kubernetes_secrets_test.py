@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from pre_commit_hooks_demeesterdev.no_kubernetes_secrets import main
+from pre_commit_hooks_demeesterdev.detect_kubernetes_secrets import main
 from testing.util import get_resource_path
 
 
