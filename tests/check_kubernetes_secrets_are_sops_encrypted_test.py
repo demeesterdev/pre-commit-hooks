@@ -21,3 +21,12 @@ from testing.util import get_resource_path
 def test_main(filename, expected_retval):
     ret = main([get_resource_path(filename)])
     assert ret == expected_retval
+
+
+def test_main_empty_secrets():
+    empty_secret = get_resource_path('secret_no_data.yaml')
+    # Should pass, when allow empty secrets
+    assert main([empty_secret, '--allow-secrets-without-data']) == 0
+
+    # Should fail, when allow empty secrets
+    assert main([empty_secret]) == 1

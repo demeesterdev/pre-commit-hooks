@@ -29,7 +29,7 @@ def validate_enc(item: Any) -> bool:
     return False
 
 
-def check_doc(doc: Any) -> tuple[bool, str]:
+def check_doc(doc: Any, allow_dataless_secret: bool) -> tuple[bool, str]:
     if 'kind' not in doc:
         return True, 'yaml definition not of k8s kind'
 
@@ -44,18 +44,12 @@ def check_doc(doc: Any) -> tuple[bool, str]:
 
     doc_descriptor = f'secret/{secret_name}'
 
-    if 'sops' not in doc:
-        # sops puts a `sops` key in the encrypted output. If it is not
-        # present, very likely the file is not encrypted.
-        return False, (
-            f'manifest {doc_descriptor} is not properly encypted: '
-            'is not properly encrypted'
-        )
-
     invalid_keys = []
+    has_data = False
     if 'data' in doc:
         data = doc['data']
         for k in data:
+            has_data = True
             # Values under the `sops` key are not encrypted.
             if not validate_enc(data[k]):
                 # Collect all invalid keys so we can provide
@@ -65,11 +59,23 @@ def check_doc(doc: Any) -> tuple[bool, str]:
     if 'stringData' in doc:
         stringdata = doc['stringData']
         for k in stringdata:
+            has_data = True
             # Values under the `sops` key are not encrypted.
             if not validate_enc(stringdata[k]):
                 # Collect all invalid keys so we can provide
                 # useful error message
                 invalid_keys.append(k)
+
+    if not has_data and allow_dataless_secret:
+        return True, 'no encryption: no data in secret'
+
+    if 'sops' not in doc:
+        # sops puts a `sops` key in the encrypted output. If it is not
+        # present, very likely the file is not encrypted.
+        return False, (
+            f'manifest {doc_descriptor} is not properly encypted: '
+            'missing sops keys'
+        )
 
     if invalid_keys:
         return False, (
@@ -80,7 +86,10 @@ def check_doc(doc: Any) -> tuple[bool, str]:
     return True, 'Valid encryption'
 
 
-def check_file(filename: str) -> tuple[bool, str]:
+def check_file(
+        filename: str,
+        allow_dataless_secret: bool = False,
+) -> tuple[bool, str]:
     with open(filename, encoding='UTF-8') as f:
         try:
             docs = list(yaml.load_all(f))
@@ -93,7 +102,7 @@ def check_file(filename: str) -> tuple[bool, str]:
 
     failed_messages = []
     for doc in docs:
-        is_ok, message = check_doc(doc)
+        is_ok, message = check_doc(doc, allow_dataless_secret)
         if not is_ok:
             failed_messages.append(message)
 
@@ -106,12 +115,19 @@ def check_file(filename: str) -> tuple[bool, str]:
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument('filenames', nargs='*', help='Filenames to check.')
+    parser.add_argument(
+        '--allow-secrets-without-data', action='store_true',
+        help='allow secrets without Data or stringData.',
+    )
     args = parser.parse_args(argv)
 
     failed_messages = []
     for filename in args.filenames:
         try:
-            is_valid, message = check_file(filename)
+            is_valid, message = check_file(
+                filename,
+                allow_dataless_secret=args.allow_secrets_without_data,
+            )
             if not is_valid:
                 failed_messages.append(message)
         except Exception as err:  # pragma: no cover

@@ -24,6 +24,10 @@ Detects kubernetes secret manifests in yaml files.
 
 checks that kubernetes secret manifests in yaml files are encrypted with sops
 
+- `--allow-secrets-without-data` - allows secrets without `data` or `stringData`
+  to pass. Usefull when populating secrets trough other means like
+  [kubernetes-reflector](https://github.com/emberstack/kubernetes-reflector).
+
 #### `check-yaml`
 
 > sourced from https://github.com/pre-commit/pre-commit-hooks
